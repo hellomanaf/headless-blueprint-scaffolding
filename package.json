@@ -5,11 +5,10 @@
     "dev": "faust dev",
     "build": "faust build --skip-health-checks",
     "generate": "faust generatePossibleTypes",
-    "start": "faust start",
+    "start": "faust start --skip-health-checks",
     "format": "prettier . --write",
     "test:format": "prettier . --check"
-  },
-  "dependencies": {
+  },  "dependencies": {
     "@apollo/client": "^3.13.8",
     "@faustwp/cli": "^3.2.3",
     "@faustwp/core": "^3.2.6",
