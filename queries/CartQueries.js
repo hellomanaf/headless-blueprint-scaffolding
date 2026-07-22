@@ -13,11 +13,10 @@ export const CART_FRAGMENT = gql`
         product {
           node {
             __typename
+            databaseId
+            slug
+            name
             ... on SimpleProduct {
-              id
-              databaseId
-              name
-              slug
               price
               image {
                 sourceUrl
@@ -25,10 +24,6 @@ export const CART_FRAGMENT = gql`
               }
             }
             ... on VariableProduct {
-              id
-              databaseId
-              name
-              slug
               price
               image {
                 sourceUrl
@@ -36,10 +31,6 @@ export const CART_FRAGMENT = gql`
               }
             }
             ... on ExternalProduct {
-              id
-              databaseId
-              name
-              slug
               price
               image {
                 sourceUrl
@@ -47,10 +38,6 @@ export const CART_FRAGMENT = gql`
               }
             }
             ... on GroupProduct {
-              id
-              databaseId
-              name
-              slug
               image {
                 sourceUrl
                 altText
@@ -58,26 +45,10 @@ export const CART_FRAGMENT = gql`
             }
           }
         }
-        variation {
-          node {
-            id
-            databaseId
-            name
-            price
-            image {
-              sourceUrl
-              altText
-            }
-          }
-        }
       }
     }
     subtotal
-    subtotalTax
-    shippingTotal
     total
-    totalTax
-    discountTotal
     isEmpty
   }
 `;

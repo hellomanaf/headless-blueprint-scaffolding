@@ -18,8 +18,15 @@ function formatPrice(price) {
   return price.replace(/<[^>]*>/g, "").trim();
 }
 
-function resolveProduct(data) {
-  return data?.products?.nodes?.[0] || null;
+function resolveProduct(data, slug) {
+  const bySlug = data?.bySlug?.nodes?.[0];
+  if (bySlug) return bySlug;
+
+  const searchNodes = data?.bySearch?.nodes || [];
+  const exact = searchNodes.find(
+    (item) => String(item?.slug).toLowerCase() === String(slug).toLowerCase(),
+  );
+  return exact || searchNodes[0] || null;
 }
 
 export default function ProductPage(props) {
@@ -40,7 +47,7 @@ export default function ProductPage(props) {
     nodes: [],
   };
   const { title: siteTitle, description: siteDescription } = siteData;
-  const product = resolveProduct(data);
+  const product = resolveProduct(data, slug);
 
   if (loading && !product) {
     return (

@@ -33,6 +33,7 @@ export function CartProvider({ children }) {
     ssr: false,
     skip: typeof window === "undefined",
     fetchPolicy: "network-only",
+    errorPolicy: "all",
     notifyOnNetworkStatusChange: true,
   });
 

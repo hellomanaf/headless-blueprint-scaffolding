@@ -78,14 +78,24 @@ export default function CartPage() {
         {loading && !cart && <p>Loading cart…</p>}
         {error && (
           <p className={styles.error}>
-            {error.message || "Could not load cart"}
+            {/internal server error/i.test(error.message)
+              ? "Could not load cart from the store. Try refreshing. If this persists, check WooCommerce / WPGraphQL on WordPress."
+              : error.message}
           </p>
         )}
         {actionError && <p className={styles.error}>{actionError}</p>}
 
-        {!loading && (!items || items.length === 0) && (
+        {!loading && !error && (!items || items.length === 0) && (
           <div className={styles.empty}>
             <p>Your cart is empty.</p>
+            <Link href="/" className={styles.linkButton}>
+              Continue shopping
+            </Link>
+          </div>
+        )}
+
+        {error && (!items || items.length === 0) && (
+          <div className={styles.empty}>
             <Link href="/" className={styles.linkButton}>
               Continue shopping
             </Link>

@@ -32,6 +32,7 @@ export default function MyAccountPage() {
     ssr: false,
     skip: typeof window === "undefined",
     fetchPolicy: "network-only",
+    errorPolicy: "all",
   });
 
   const [login] = useMutation(LOGIN_MUTATION, { client: wooClient });
@@ -68,9 +69,8 @@ export default function MyAccountPage() {
   const menuItems = headerMenuDataQuery?.data?.primaryMenuItems?.nodes || [];
   const { title: siteTitle, description: siteDescription } = siteData;
 
-  const viewer = data?.viewer;
   const customer = data?.customer;
-  const isLoggedIn = Boolean(viewer?.id);
+  const isLoggedIn = Boolean(customer?.databaseId);
   const orders = customer?.orders?.nodes || [];
 
   useEffect(() => {
@@ -293,7 +293,13 @@ export default function MyAccountPage() {
         <h1 className={styles.title}>My Account</h1>
 
         {loading && !data && <p>Loading…</p>}
-        {error && <p className={styles.error}>{error.message}</p>}
+        {error && (
+          <p className={styles.error}>
+            {/internal server error/i.test(error.message)
+              ? "Could not load account data. If login keeps failing, set GRAPHQL_JWT_AUTH_SECRET_KEY in WordPress wp-config.php."
+              : error.message}
+          </p>
+        )}
         {formError && <p className={styles.error}>{formError}</p>}
         {formSuccess && <p className={styles.success}>{formSuccess}</p>}
 
@@ -475,7 +481,7 @@ export default function MyAccountPage() {
                     Hello{" "}
                     <strong>
                       {customer?.firstName ||
-                        viewer?.name ||
+                        customer?.email ||
                         "there"}
                     </strong>
                     .

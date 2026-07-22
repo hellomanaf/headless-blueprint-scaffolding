@@ -39,6 +39,29 @@ function serializeCookie(name, value, { maxAge, httpOnly = true } = {}) {
   return chunks.join("; ");
 }
 
+function shouldClearAuth(errors = []) {
+  return errors.some((error) =>
+    /internal server error|jwt|invalid-secret|not configured|invalid-jwt|expired/i.test(
+      error?.message || "",
+    ),
+  );
+}
+
+function isLoginOperation(body) {
+  const query = body?.query || "";
+  return /\bmutation\b[\s\S]*\blogin\b/i.test(query);
+}
+
+async function postGraphql(headers, body) {
+  const upstream = await fetch(getWordpressGraphqlUrl(), {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  });
+  const data = await upstream.json();
+  return { upstream, data };
+}
+
 /**
  * Same-origin GraphQL proxy so the WooCommerce session token can be stored
  * in an HttpOnly cookie (avoids CORS blocking the woocommerce-session header).
@@ -54,6 +77,7 @@ export default async function handler(req, res) {
     const sessionFromCookie = cleanSessionToken(cookies[SESSION_COOKIE]);
     const authFromCookie = cookies[AUTH_COOKIE] || null;
     const authFromHeader = req.headers.authorization || null;
+    const hasAuth = Boolean(authFromHeader || authFromCookie);
 
     const upstreamHeaders = {
       "Content-Type": "application/json",
@@ -70,15 +94,25 @@ export default async function handler(req, res) {
       upstreamHeaders.Authorization = `Bearer ${authFromCookie}`;
     }
 
-    const upstream = await fetch(getWordpressGraphqlUrl(), {
-      method: "POST",
-      headers: upstreamHeaders,
-      body: JSON.stringify(req.body),
-    });
+    let { upstream, data } = await postGraphql(upstreamHeaders, req.body);
+    const cookiesToSet = [];
+
+    // Bad/misconfigured JWT often poisons every Woo request with a 500.
+    // Retry once without Authorization for non-login operations.
+    if (
+      hasAuth &&
+      !isLoginOperation(req.body) &&
+      shouldClearAuth(data?.errors || [])
+    ) {
+      delete upstreamHeaders.Authorization;
+      const retried = await postGraphql(upstreamHeaders, req.body);
+      upstream = retried.upstream;
+      data = retried.data;
+      cookiesToSet.push(serializeCookie(AUTH_COOKIE, "", { maxAge: 0 }));
+    }
 
     const rawSession = upstream.headers.get("woocommerce-session");
     const nextSession = cleanSessionToken(rawSession);
-    const cookiesToSet = [];
 
     if (rawSession && String(rawSession).toLowerCase() === "false") {
       cookiesToSet.push(serializeCookie(SESSION_COOKIE, "", { maxAge: 0 }));
@@ -89,8 +123,6 @@ export default async function handler(req, res) {
         }),
       );
     }
-
-    const data = await upstream.json();
 
     const authToken =
       data?.data?.login?.authToken ||
