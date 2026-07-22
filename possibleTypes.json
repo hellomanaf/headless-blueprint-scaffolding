@@ -17,9 +17,14 @@
     "MenuItem",
     "Plugin",
     "Theme",
-    "CommentAuthor"
+    "CommentAuthor",
+    "ExternalProduct",
+    "GroupProduct",
+    "SimpleProduct",
+    "VariableProduct",
+    "SimpleProductVariation"
   ],
-  "TermNode": ["Category", "PostFormat", "Tag"],
+  "TermNode": ["Category", "PostFormat", "Tag", "ProductCategory", "ProductTag"],
   "UniformResourceIdentifiable": [
     "Category",
     "ContentType",
@@ -28,7 +33,13 @@
     "Page",
     "Post",
     "PostFormat",
-    "Tag"
+    "Tag",
+    "ExternalProduct",
+    "GroupProduct",
+    "SimpleProduct",
+    "VariableProduct",
+    "ProductCategory",
+    "ProductTag"
   ],
   "EnqueuedAsset": ["EnqueuedScript", "EnqueuedStylesheet"],
   "DatabaseIdentifier": [
@@ -41,28 +52,140 @@
     "PostFormat",
     "Tag",
     "Menu",
-    "MenuItem"
+    "MenuItem",
+    "ExternalProduct",
+    "GroupProduct",
+    "SimpleProduct",
+    "VariableProduct",
+    "SimpleProductVariation",
+    "ProductCategory",
+    "ProductTag"
   ],
-  "HierarchicalTermNode": ["Category"],
-  "MenuItemLinkable": ["Category", "Page", "Post", "Tag"],
-  "ContentNode": ["MediaItem", "Page", "Post"],
+  "HierarchicalTermNode": ["Category", "ProductCategory"],
+  "MenuItemLinkable": [
+    "Category",
+    "Page",
+    "Post",
+    "Tag",
+    "ExternalProduct",
+    "GroupProduct",
+    "SimpleProduct",
+    "VariableProduct",
+    "ProductCategory",
+    "ProductTag"
+  ],
+  "ContentNode": [
+    "MediaItem",
+    "Page",
+    "Post",
+    "ExternalProduct",
+    "GroupProduct",
+    "SimpleProduct",
+    "VariableProduct"
+  ],
   "Commenter": ["User", "CommentAuthor"],
-  "NodeWithTemplate": ["MediaItem", "Page", "Post"],
+  "NodeWithTemplate": [
+    "MediaItem",
+    "Page",
+    "Post",
+    "ExternalProduct",
+    "GroupProduct",
+    "SimpleProduct",
+    "VariableProduct"
+  ],
   "ContentTemplate": [
     "DefaultTemplate",
     "Template_Blank",
     "Template_BlogAlternative"
   ],
-  "NodeWithTitle": ["MediaItem", "Page", "Post"],
+  "NodeWithTitle": [
+    "MediaItem",
+    "Page",
+    "Post",
+    "ExternalProduct",
+    "GroupProduct",
+    "SimpleProduct",
+    "VariableProduct"
+  ],
   "NodeWithAuthor": ["MediaItem", "Page", "Post"],
-  "NodeWithComments": ["MediaItem", "Page", "Post"],
+  "NodeWithComments": [
+    "MediaItem",
+    "Page",
+    "Post",
+    "ExternalProduct",
+    "GroupProduct",
+    "SimpleProduct",
+    "VariableProduct"
+  ],
   "HierarchicalContentNode": ["MediaItem", "Page"],
-  "NodeWithContentEditor": ["Page", "Post"],
-  "NodeWithFeaturedImage": ["Page", "Post"],
+  "NodeWithContentEditor": [
+    "Page",
+    "Post",
+    "ExternalProduct",
+    "GroupProduct",
+    "SimpleProduct",
+    "VariableProduct"
+  ],
+  "NodeWithFeaturedImage": [
+    "Page",
+    "Post",
+    "ExternalProduct",
+    "GroupProduct",
+    "SimpleProduct",
+    "VariableProduct"
+  ],
   "NodeWithRevisions": ["Page", "Post"],
   "NodeWithPageAttributes": ["Page"],
   "NodeWithExcerpt": ["Post"],
   "NodeWithTrackbacks": ["Post"],
   "ContentRevisionUnion": ["Post", "Page"],
-  "MenuItemObjectUnion": ["Post", "Page", "Category", "Tag"]
+  "MenuItemObjectUnion": [
+    "Post",
+    "Page",
+    "Category",
+    "Tag",
+    "ExternalProduct",
+    "GroupProduct",
+    "SimpleProduct",
+    "VariableProduct",
+    "ProductCategory",
+    "ProductTag"
+  ],
+  "Product": [
+    "ExternalProduct",
+    "GroupProduct",
+    "SimpleProduct",
+    "VariableProduct"
+  ],
+  "ProductUnion": [
+    "ExternalProduct",
+    "GroupProduct",
+    "SimpleProduct",
+    "VariableProduct"
+  ],
+  "ProductVariation": ["SimpleProductVariation"],
+  "NodeWithProductAttributes": [
+    "ExternalProduct",
+    "GroupProduct",
+    "SimpleProduct",
+    "VariableProduct",
+    "SimpleProductVariation"
+  ],
+  "ProductAttribute": ["GlobalProductAttribute", "LocalProductAttribute"],
+  "ProductDownloadable": [
+    "SimpleProduct",
+    "VariableProduct",
+    "SimpleProductVariation"
+  ],
+  "InventoriedProduct": [
+    "SimpleProduct",
+    "VariableProduct",
+    "SimpleProductVariation"
+  ],
+  "ProductWithPricing": [
+    "ExternalProduct",
+    "SimpleProduct",
+    "VariableProduct",
+    "SimpleProductVariation"
+  ]
 }

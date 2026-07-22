@@ -9,10 +9,16 @@ function formatPrice(price) {
 }
 
 export default function ProductCard({ product }) {
-  const { name, slug, shortDescription, image, price, onSale, salePrice, regularPrice } =
-    product;
+  const name = product?.name || product?.title || "Untitled product";
+  const slug = product?.slug;
+  const shortDescription = product?.shortDescription;
+  const image = product?.image;
+  const price = product?.price;
+  const onSale = product?.onSale;
+  const salePrice = product?.salePrice;
+  const regularPrice = product?.regularPrice;
 
-  const href = `/product/${slug}/`;
+  const href = slug ? `/product/${slug}/` : "#";
   const displayPrice = formatPrice(onSale && salePrice ? salePrice : price);
   const originalPrice = onSale ? formatPrice(regularPrice) : null;
 

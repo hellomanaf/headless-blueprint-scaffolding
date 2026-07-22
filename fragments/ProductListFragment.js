@@ -1,30 +1,69 @@
 import { gql } from "@apollo/client";
 
-export const PRODUCT_LIST_FRAGMENT = gql`
-  fragment ProductListFragment on Product {
+/**
+ * Fields are requested on each concrete product type (not the Product
+ * interface) so Apollo can match by __typename without WooCommerce entries
+ * in possibleTypes.json. Run `npm run generate` after installing WooGraphQL
+ * to keep possibleTypes in sync.
+ */
+export const PRODUCT_FIELDS = gql`
+  fragment SimpleProductFields on SimpleProduct {
     id
     databaseId
     name
     slug
     shortDescription
-    ... on SimpleProduct {
-      price
-      regularPrice
-      salePrice
-      onSale
+    price
+    regularPrice
+    salePrice
+    onSale
+    image {
+      id
+      sourceUrl
+      altText
     }
-    ... on VariableProduct {
-      price
-      regularPrice
-      salePrice
-      onSale
+  }
+
+  fragment VariableProductFields on VariableProduct {
+    id
+    databaseId
+    name
+    slug
+    shortDescription
+    price
+    regularPrice
+    salePrice
+    onSale
+    image {
+      id
+      sourceUrl
+      altText
     }
-    ... on ExternalProduct {
-      price
-      regularPrice
-      salePrice
-      onSale
+  }
+
+  fragment ExternalProductFields on ExternalProduct {
+    id
+    databaseId
+    name
+    slug
+    shortDescription
+    price
+    regularPrice
+    salePrice
+    onSale
+    image {
+      id
+      sourceUrl
+      altText
     }
+  }
+
+  fragment GroupProductFields on GroupProduct {
+    id
+    databaseId
+    name
+    slug
+    shortDescription
     image {
       id
       sourceUrl

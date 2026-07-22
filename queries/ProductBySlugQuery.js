@@ -1,17 +1,28 @@
 import { gql } from "@apollo/client";
-import { PRODUCT_LIST_FRAGMENT } from "../fragments/ProductListFragment";
+import { PRODUCT_FIELDS } from "../fragments/ProductListFragment";
 
 export const PRODUCT_BY_SLUG_QUERY = gql`
-  ${PRODUCT_LIST_FRAGMENT}
+  ${PRODUCT_FIELDS}
   query GetProductBySlug($slug: ID!) {
     product(id: $slug, idType: SLUG) {
-      ...ProductListFragment
-      description
+      __typename
+      ...SimpleProductFields
+      ...VariableProductFields
+      ...ExternalProductFields
+      ...GroupProductFields
       ... on SimpleProduct {
+        description
         stockStatus
       }
       ... on VariableProduct {
+        description
         stockStatus
+      }
+      ... on ExternalProduct {
+        description
+      }
+      ... on GroupProduct {
+        description
       }
     }
   }
