@@ -47,7 +47,7 @@ export default function FrontPage(props) {
             rel="noopener noreferrer"
             className={style.card}
           >
-            <h3>Documentation* →</h3>
+            <h3>Documentation for headless →</h3>
             <p>
               Learn more about Faust.js through tutorials, guides and reference
               in our documentation.
