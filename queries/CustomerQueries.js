@@ -21,13 +21,24 @@ export const GET_CUSTOMER_QUERY = gql`
           total
           lineItems {
             nodes {
-              product {
-                node {
-                  name
-                }
-              }
               quantity
               total
+              product {
+                node {
+                  ... on SimpleProduct {
+                    name
+                  }
+                  ... on VariableProduct {
+                    name
+                  }
+                  ... on ExternalProduct {
+                    name
+                  }
+                  ... on GroupProduct {
+                    name
+                  }
+                }
+              }
             }
           }
         }

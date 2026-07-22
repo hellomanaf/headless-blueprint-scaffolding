@@ -14,6 +14,8 @@ import {
   CHECKOUT_MUTATION,
   PAYMENT_GATEWAYS_QUERY,
 } from "../mutations/CheckoutMutations";
+import { getWooApolloClient } from "../lib/wooClient";
+import { getErrorMessage } from "../lib/errors";
 import styles from "../styles/checkout.module.css";
 
 const emptyAddress = {
@@ -32,17 +34,24 @@ const emptyAddress = {
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const wooClient = getWooApolloClient();
   const siteDataQuery = useQuery(SITE_DATA_QUERY) || {};
   const headerMenuDataQuery = useQuery(HEADER_MENU_QUERY) || {};
   const { cart, items, loading: cartLoading, formatPrice, refetch } = useCart();
   const { data: customerData } = useQuery(GET_CUSTOMER_QUERY, {
+    client: wooClient,
     ssr: false,
+    skip: typeof window === "undefined",
     fetchPolicy: "network-only",
   });
   const { data: gatewaysData } = useQuery(PAYMENT_GATEWAYS_QUERY, {
+    client: wooClient,
     ssr: false,
+    skip: typeof window === "undefined",
   });
-  const [checkout, { loading: checkingOut }] = useMutation(CHECKOUT_MUTATION);
+  const [checkout, { loading: checkingOut }] = useMutation(CHECKOUT_MUTATION, {
+    client: wooClient,
+  });
 
   const [billing, setBilling] = useState(emptyAddress);
   const [shipToDifferent, setShipToDifferent] = useState(false);
@@ -128,9 +137,13 @@ export default function CheckoutPage() {
         },
       });
 
+      if (result?.errors?.length) {
+        throw new Error(result.errors.map((item) => item.message).join(" "));
+      }
+
       const payload = result?.data?.checkout;
-      if (!payload) {
-        throw new Error("Checkout failed");
+      if (!payload?.order && payload?.result !== "success") {
+        throw new Error(payload?.result || "Checkout failed");
       }
 
       if (payload.redirect) {
@@ -142,7 +155,7 @@ export default function CheckoutPage() {
       const orderNumber = payload.order?.orderNumber || payload.order?.databaseId;
       router.push(`/order-received/?order=${orderNumber || ""}`);
     } catch (err) {
-      setError(err.message || "Checkout failed");
+      setError(getErrorMessage(err, "Checkout failed"));
     }
   }
 

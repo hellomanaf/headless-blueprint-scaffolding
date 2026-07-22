@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useCart } from "../context/CartContext";
+import { getErrorMessage } from "../lib/errors";
 import styles from "../styles/add-to-cart.module.css";
 
 export default function AddToCartButton({
@@ -26,7 +27,7 @@ export default function AddToCartButton({
       });
       setMessage("Added to cart");
     } catch (err) {
-      setError(err.message || "Could not add to cart");
+      setError(getErrorMessage(err, "Could not add to cart"));
     }
   }
 

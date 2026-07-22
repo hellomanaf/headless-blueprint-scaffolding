@@ -13,11 +13,9 @@ import {
   REGISTER_CUSTOMER_MUTATION,
   UPDATE_CUSTOMER_MUTATION,
 } from "../mutations/CustomerMutations";
-import {
-  clearWooAuth,
-  getWooAuthToken,
-  setWooAuthToken,
-} from "../lib/wooAuth";
+import { getWooApolloClient } from "../lib/wooClient";
+import { getErrorMessage, sanitizeUsername } from "../lib/errors";
+import { clearWooAuth, setWooAuthToken } from "../lib/wooAuth";
 import styles from "../styles/my-account.module.css";
 
 function stripHtml(value) {
@@ -26,23 +24,29 @@ function stripHtml(value) {
 }
 
 export default function MyAccountPage() {
+  const wooClient = getWooApolloClient();
   const siteDataQuery = useQuery(SITE_DATA_QUERY) || {};
   const headerMenuDataQuery = useQuery(HEADER_MENU_QUERY) || {};
   const { data, loading, error, refetch } = useQuery(GET_CUSTOMER_QUERY, {
+    client: wooClient,
     ssr: false,
+    skip: typeof window === "undefined",
     fetchPolicy: "network-only",
   });
 
-  const [login] = useMutation(LOGIN_MUTATION);
-  const [registerCustomer] = useMutation(REGISTER_CUSTOMER_MUTATION);
-  const [updateCustomer] = useMutation(UPDATE_CUSTOMER_MUTATION);
+  const [login] = useMutation(LOGIN_MUTATION, { client: wooClient });
+  const [registerCustomer] = useMutation(REGISTER_CUSTOMER_MUTATION, {
+    client: wooClient,
+  });
+  const [updateCustomer] = useMutation(UPDATE_CUSTOMER_MUTATION, {
+    client: wooClient,
+  });
 
   const [tab, setTab] = useState("dashboard");
   const [authMode, setAuthMode] = useState("login");
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
   const [busy, setBusy] = useState(false);
-  const [hasAuthToken, setHasAuthToken] = useState(false);
 
   const [loginForm, setLoginForm] = useState({ username: "", password: "" });
   const [registerForm, setRegisterForm] = useState({
@@ -66,12 +70,8 @@ export default function MyAccountPage() {
 
   const viewer = data?.viewer;
   const customer = data?.customer;
-  const isLoggedIn = Boolean(viewer?.id || hasAuthToken);
+  const isLoggedIn = Boolean(viewer?.id);
   const orders = customer?.orders?.nodes || [];
-
-  useEffect(() => {
-    setHasAuthToken(Boolean(getWooAuthToken()));
-  }, []);
 
   useEffect(() => {
     if (!customer) return;
@@ -114,24 +114,26 @@ export default function MyAccountPage() {
     try {
       const result = await login({
         variables: {
-          input: {
-            username: loginForm.username,
-            password: loginForm.password,
-          },
+          username: loginForm.username,
+          password: loginForm.password,
         },
       });
+
+      if (result?.errors?.length) {
+        throw new Error(result.errors.map((item) => item.message).join(" "));
+      }
+
       const authToken = result?.data?.login?.authToken;
       if (!authToken) {
         throw new Error(
-          "Login succeeded but no auth token was returned. Install WPGraphQL JWT Authentication.",
+          "Login did not return an auth token. Install and configure WPGraphQL JWT Authentication.",
         );
       }
       setWooAuthToken(authToken);
-      setHasAuthToken(true);
       setFormSuccess("Logged in successfully.");
       await refetch();
     } catch (err) {
-      setFormError(err.message || "Login failed");
+      setFormError(getErrorMessage(err, "Login failed"));
     } finally {
       setBusy(false);
     }
@@ -143,26 +145,53 @@ export default function MyAccountPage() {
     setFormSuccess("");
     setBusy(true);
     try {
+      const username = sanitizeUsername(
+        registerForm.username,
+        registerForm.email,
+      );
+
       const result = await registerCustomer({
         variables: {
           input: {
             email: registerForm.email,
-            username: registerForm.username || registerForm.email,
+            username,
             password: registerForm.password,
-            firstName: registerForm.firstName,
-            lastName: registerForm.lastName,
+            firstName: registerForm.firstName || undefined,
+            lastName: registerForm.lastName || undefined,
           },
         },
       });
+
+      if (result?.errors?.length) {
+        throw new Error(result.errors.map((item) => item.message).join(" "));
+      }
+
+      if (!result?.data?.registerCustomer?.customer) {
+        throw new Error(
+          "Registration failed. Enable “Anyone can register” in WordPress Settings → General, and ensure WooCommerce account creation is allowed.",
+        );
+      }
+
       const authToken = result?.data?.registerCustomer?.authToken;
       if (authToken) {
         setWooAuthToken(authToken);
-        setHasAuthToken(true);
       }
-      setFormSuccess("Account created successfully.");
+
+      setFormSuccess(
+        authToken
+          ? "Account created successfully."
+          : "Account created. Please log in with your email and password.",
+      );
+      if (!authToken) {
+        setAuthMode("login");
+        setLoginForm({
+          username: registerForm.email,
+          password: "",
+        });
+      }
       await refetch();
     } catch (err) {
-      setFormError(err.message || "Registration failed");
+      setFormError(getErrorMessage(err, "Registration failed"));
     } finally {
       setBusy(false);
     }
@@ -170,7 +199,19 @@ export default function MyAccountPage() {
 
   async function handleLogout() {
     clearWooAuth();
-    setHasAuthToken(false);
+    try {
+      await fetch("/api/woo-graphql", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          query: "query { __typename }",
+          wooLogout: true,
+        }),
+      });
+    } catch {
+      // ignore logout proxy errors
+    }
     setFormSuccess("Logged out.");
     setTab("dashboard");
     await refetch();
@@ -182,7 +223,7 @@ export default function MyAccountPage() {
     setFormSuccess("");
     setBusy(true);
     try {
-      await updateCustomer({
+      const result = await updateCustomer({
         variables: {
           input: {
             firstName: accountForm.firstName,
@@ -191,10 +232,13 @@ export default function MyAccountPage() {
           },
         },
       });
+      if (result?.errors?.length) {
+        throw new Error(result.errors.map((item) => item.message).join(" "));
+      }
       setFormSuccess("Account details updated.");
       await refetch();
     } catch (err) {
-      setFormError(err.message || "Could not update account");
+      setFormError(getErrorMessage(err, "Could not update account"));
     } finally {
       setBusy(false);
     }
@@ -206,7 +250,7 @@ export default function MyAccountPage() {
     setFormSuccess("");
     setBusy(true);
     try {
-      await updateCustomer({
+      const result = await updateCustomer({
         variables: {
           input: {
             billing: billingForm,
@@ -214,10 +258,13 @@ export default function MyAccountPage() {
           },
         },
       });
+      if (result?.errors?.length) {
+        throw new Error(result.errors.map((item) => item.message).join(" "));
+      }
       setFormSuccess("Addresses updated.");
       await refetch();
     } catch (err) {
-      setFormError(err.message || "Could not update addresses");
+      setFormError(getErrorMessage(err, "Could not update addresses"));
     } finally {
       setBusy(false);
     }
@@ -349,7 +396,7 @@ export default function MyAccountPage() {
                         username: e.target.value,
                       }))
                     }
-                    placeholder="Defaults to email"
+                    placeholder="Letters/numbers only (no @)"
                   />
                 </label>
                 <label>
@@ -402,7 +449,6 @@ export default function MyAccountPage() {
                     Hello{" "}
                     <strong>
                       {customer?.firstName ||
-                        customer?.displayName ||
                         viewer?.name ||
                         "there"}
                     </strong>

@@ -76,7 +76,11 @@ export default function CartPage() {
         <h1 className={styles.title}>Cart</h1>
 
         {loading && !cart && <p>Loading cart…</p>}
-        {error && <p className={styles.error}>{error.message}</p>}
+        {error && (
+          <p className={styles.error}>
+            {error.message || "Could not load cart"}
+          </p>
+        )}
         {actionError && <p className={styles.error}>{actionError}</p>}
 
         {!loading && (!items || items.length === 0) && (

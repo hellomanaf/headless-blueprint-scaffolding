@@ -7,6 +7,8 @@ import {
   REMOVE_ITEMS_FROM_CART_MUTATION,
   EMPTY_CART_MUTATION,
 } from "../mutations/CartMutations";
+import { getWooApolloClient } from "../lib/wooClient";
+import { getErrorMessage } from "../lib/errors";
 
 const CartContext = createContext(null);
 
@@ -15,21 +17,49 @@ function stripHtml(value) {
   return value.replace(/<[^>]*>/g, "").trim();
 }
 
+function writeCart(cache, cart) {
+  if (!cart) return;
+  cache.writeQuery({
+    query: GET_CART_QUERY,
+    data: { cart },
+  });
+}
+
 export function CartProvider({ children }) {
+  const client = getWooApolloClient();
+
   const { data, loading, error, refetch } = useQuery(GET_CART_QUERY, {
+    client,
     ssr: false,
+    skip: typeof window === "undefined",
     fetchPolicy: "network-only",
     notifyOnNetworkStatusChange: true,
   });
 
-  const [addToCartMutation, addState] = useMutation(ADD_TO_CART_MUTATION);
+  const [addToCartMutation, addState] = useMutation(ADD_TO_CART_MUTATION, {
+    client,
+    update: (cache, result) => writeCart(cache, result?.data?.addToCart?.cart),
+  });
   const [updateQuantitiesMutation, updateState] = useMutation(
     UPDATE_CART_ITEM_QUANTITIES_MUTATION,
+    {
+      client,
+      update: (cache, result) =>
+        writeCart(cache, result?.data?.updateItemQuantities?.cart),
+    },
   );
   const [removeItemsMutation, removeState] = useMutation(
     REMOVE_ITEMS_FROM_CART_MUTATION,
+    {
+      client,
+      update: (cache, result) =>
+        writeCart(cache, result?.data?.removeItemsFromCart?.cart),
+    },
   );
-  const [emptyCartMutation, emptyState] = useMutation(EMPTY_CART_MUTATION);
+  const [emptyCartMutation, emptyState] = useMutation(EMPTY_CART_MUTATION, {
+    client,
+    update: (cache, result) => writeCart(cache, result?.data?.emptyCart?.cart),
+  });
 
   const cart = data?.cart || null;
   const itemCount = cart?.contents?.itemCount || 0;
@@ -53,13 +83,18 @@ export function CartProvider({ children }) {
         const result = await addToCartMutation({
           variables: {
             input: {
-              productId,
-              quantity,
-              ...(variationId ? { variationId } : {}),
+              productId: Number(productId),
+              quantity: Number(quantity) || 1,
+              ...(variationId ? { variationId: Number(variationId) } : {}),
               ...(extraData ? { extraData } : {}),
             },
           },
         });
+
+        if (result?.errors?.length) {
+          throw new Error(result.errors.map((item) => item.message).join(" "));
+        }
+
         await refetch();
         return result;
       },
@@ -67,10 +102,13 @@ export function CartProvider({ children }) {
         const result = await updateQuantitiesMutation({
           variables: {
             input: {
-              items: [{ key, quantity }],
+              items: [{ key, quantity: Number(quantity) }],
             },
           },
         });
+        if (result?.errors?.length) {
+          throw new Error(result.errors.map((item) => item.message).join(" "));
+        }
         await refetch();
         return result;
       },
@@ -82,16 +120,23 @@ export function CartProvider({ children }) {
             },
           },
         });
+        if (result?.errors?.length) {
+          throw new Error(result.errors.map((item) => item.message).join(" "));
+        }
         await refetch();
         return result;
       },
       async emptyCart() {
         const result = await emptyCartMutation({
-          variables: { input: { clearPersistentCart: true } },
+          variables: { input: {} },
         });
+        if (result?.errors?.length) {
+          throw new Error(result.errors.map((item) => item.message).join(" "));
+        }
         await refetch();
         return result;
       },
+      getErrorMessage,
     }),
     [
       cart,
