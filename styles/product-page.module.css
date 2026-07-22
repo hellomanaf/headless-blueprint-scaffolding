@@ -1,0 +1,93 @@
+.status {
+  margin: 2rem 0;
+  font-size: 1.125rem;
+  color: #4b5563;
+}
+
+.backLink {
+  display: inline-block;
+  margin: 1.5rem 0;
+  color: royalblue;
+  font-weight: 500;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.5rem;
+  margin-bottom: 3rem;
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.imageWrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: #f3f4f6;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.image {
+  object-fit: cover;
+}
+
+.placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 2rem;
+  line-height: 1.2;
+}
+
+.price {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.regularPrice {
+  color: #9ca3af;
+  font-weight: 400;
+  font-size: 1.125rem;
+  text-decoration: line-through;
+}
+
+.salePrice {
+  color: #b91c1c;
+}
+
+.shortDescription,
+.description {
+  color: #374151;
+  line-height: 1.6;
+  font-size: 1.05rem;
+}
+
+.shortDescription p,
+.description p {
+  margin: 0 0 0.75rem;
+}
