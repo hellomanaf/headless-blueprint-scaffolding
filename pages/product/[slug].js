@@ -10,11 +10,16 @@ import AddToCartButton from "../../components/AddToCartButton";
 import { SITE_DATA_QUERY } from "../../queries/SiteSettingsQuery";
 import { HEADER_MENU_QUERY } from "../../queries/MenuQueries";
 import { PRODUCT_BY_SLUG_QUERY } from "../../queries/ProductBySlugQuery";
+import { getErrorMessage } from "../../lib/errors";
 import styles from "../../styles/product-page.module.css";
 
 function formatPrice(price) {
   if (!price) return null;
   return price.replace(/<[^>]*>/g, "").trim();
+}
+
+function resolveProduct(data) {
+  return data?.products?.nodes?.[0] || null;
 }
 
 export default function ProductPage(props) {
@@ -24,8 +29,10 @@ export default function ProductPage(props) {
   const siteDataQuery = useQuery(SITE_DATA_QUERY) || {};
   const headerMenuDataQuery = useQuery(HEADER_MENU_QUERY) || {};
   const { data, loading, error } = useQuery(PRODUCT_BY_SLUG_QUERY, {
-    variables: { slug },
+    variables: { slug: String(slug || "") },
     skip: !slug,
+    errorPolicy: "all",
+    fetchPolicy: "cache-and-network",
   });
 
   const siteData = siteDataQuery?.data?.generalSettings || {};
@@ -33,7 +40,7 @@ export default function ProductPage(props) {
     nodes: [],
   };
   const { title: siteTitle, description: siteDescription } = siteData;
-  const product = data?.product;
+  const product = resolveProduct(data);
 
   if (loading && !product) {
     return (
@@ -51,7 +58,8 @@ export default function ProductPage(props) {
     );
   }
 
-  if (error || !product) {
+  if (!product) {
+    const details = getErrorMessage(error, "");
     return (
       <>
         <Header
@@ -61,8 +69,16 @@ export default function ProductPage(props) {
         />
         <main className="container">
           <p className={styles.status}>
-            Product not found.
-            {error?.message ? ` (${error.message})` : null}
+            Product not found
+            {slug ? ` for “${slug}”` : ""}.
+          </p>
+          {details && !/internal server error/i.test(details) && (
+            <p className={styles.status}>{details}</p>
+          )}
+          <p className={styles.status}>
+            If you recently changed the product category or name, confirm the
+            product slug in WordPress (Products → edit product → permalink) and
+            visit Settings → Permalinks → Save to flush rewrite rules.
           </p>
           <Link href="/" className={styles.backLink}>
             ← Back to shop
@@ -184,7 +200,7 @@ ProductPage.queries = [
   {
     query: PRODUCT_BY_SLUG_QUERY,
     variables: (seedNode, ctx) => ({
-      slug: seedNode?.slug || ctx?.params?.slug,
+      slug: String(seedNode?.slug || ctx?.params?.slug || ""),
     }),
   },
 ];
