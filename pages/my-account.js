@@ -15,7 +15,12 @@ import {
 } from "../mutations/CustomerMutations";
 import { getWooApolloClient } from "../lib/wooClient";
 import { getErrorMessage, sanitizeUsername } from "../lib/errors";
-import { clearWooAuth, setWooAuthToken } from "../lib/wooAuth";
+import {
+  clearWooAuth,
+  clearWooSessionToken,
+  getWooAuthToken,
+  setWooAuthToken,
+} from "../lib/wooAuth";
 import styles from "../styles/my-account.module.css";
 
 function stripHtml(value) {
@@ -48,6 +53,7 @@ export default function MyAccountPage() {
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
   const [busy, setBusy] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const [loginForm, setLoginForm] = useState({ username: "", password: "" });
   const [registerForm, setRegisterForm] = useState({
@@ -70,11 +76,17 @@ export default function MyAccountPage() {
   const { title: siteTitle, description: siteDescription } = siteData;
 
   const customer = data?.customer;
-  const isLoggedIn = Boolean(customer?.databaseId);
+  // Auth token (not customer.databaseId) controls the logged-in UI.
+  // Woo session can still return a customer id after JWT logout.
+  const isLoggedIn = isAuthenticated;
   const orders = customer?.orders?.nodes || [];
 
   useEffect(() => {
-    if (!customer) return;
+    setIsAuthenticated(Boolean(getWooAuthToken()));
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated || !customer) return;
     setAccountForm({
       firstName: customer.firstName || "",
       lastName: customer.lastName || "",
@@ -104,7 +116,7 @@ export default function MyAccountPage() {
       postcode: customer.shipping?.postcode || "",
       country: customer.shipping?.country || "",
     });
-  }, [customer]);
+  }, [customer, isAuthenticated]);
 
   async function handleLogin(event) {
     event.preventDefault();
@@ -130,9 +142,11 @@ export default function MyAccountPage() {
         );
       }
       setWooAuthToken(authToken);
+      setIsAuthenticated(true);
       setFormSuccess("Logged in successfully.");
       await refetch();
     } catch (err) {
+      setIsAuthenticated(false);
       const message = getErrorMessage(err, "Login failed");
       if (/jwt auth is not configured/i.test(message)) {
         setFormError(
@@ -182,6 +196,7 @@ export default function MyAccountPage() {
       const authToken = result?.data?.registerCustomer?.authToken;
       if (authToken) {
         setWooAuthToken(authToken);
+        setIsAuthenticated(true);
       }
 
       setFormSuccess(
@@ -190,6 +205,7 @@ export default function MyAccountPage() {
           : "Account created. Please log in with your email and password.",
       );
       if (!authToken) {
+        setIsAuthenticated(false);
         setAuthMode("login");
         setLoginForm({
           username: registerForm.email,
@@ -206,6 +222,14 @@ export default function MyAccountPage() {
 
   async function handleLogout() {
     clearWooAuth();
+    clearWooSessionToken();
+    setIsAuthenticated(false);
+    setTab("dashboard");
+    setAuthMode("login");
+    setAccountForm({ firstName: "", lastName: "", email: "" });
+    setBillingForm({});
+    setShippingForm({});
+
     try {
       await fetch("/api/woo-graphql", {
         method: "POST",
@@ -219,8 +243,14 @@ export default function MyAccountPage() {
     } catch {
       // ignore logout proxy errors
     }
+
+    try {
+      await wooClient.clearStore();
+    } catch {
+      // ignore cache clear errors
+    }
+
     setFormSuccess("Logged out.");
-    setTab("dashboard");
     await refetch();
   }
 

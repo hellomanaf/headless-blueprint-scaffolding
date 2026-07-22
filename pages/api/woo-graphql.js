@@ -139,6 +139,7 @@ export default async function handler(req, res) {
 
     if (req.body?.wooLogout) {
       cookiesToSet.push(serializeCookie(AUTH_COOKIE, "", { maxAge: 0 }));
+      cookiesToSet.push(serializeCookie(SESSION_COOKIE, "", { maxAge: 0 }));
     }
 
     if (cookiesToSet.length) {
