@@ -16,6 +16,11 @@ import {
 } from "../mutations/CheckoutMutations";
 import { getWooApolloClient } from "../lib/wooClient";
 import { getErrorMessage } from "../lib/errors";
+import {
+  saveLastOrder,
+  orderIdFromRedirect,
+  isExternalPaymentRedirect,
+} from "../lib/orderStorage";
 import styles from "../styles/checkout.module.css";
 
 const emptyAddress = {
@@ -137,23 +142,55 @@ export default function CheckoutPage() {
         },
       });
 
-      if (result?.errors?.length) {
+      if (result?.errors?.length && !result?.data?.checkout) {
         throw new Error(result.errors.map((item) => item.message).join(" "));
       }
 
       const payload = result?.data?.checkout;
-      if (!payload?.order && payload?.result !== "success") {
-        throw new Error(payload?.result || "Checkout failed");
+      if (!payload) {
+        throw new Error(
+          result?.errors?.[0]?.message || "Checkout failed. No response from store.",
+        );
       }
 
-      if (payload.redirect) {
+      const order = payload.order || null;
+      const resultStatus = String(payload.result || "").toLowerCase();
+      const succeeded =
+        Boolean(order) ||
+        resultStatus === "success" ||
+        Boolean(payload.redirect);
+
+      if (!succeeded) {
+        throw new Error(payload.result || "Checkout failed");
+      }
+
+      if (order) {
+        saveLastOrder(order);
+      }
+
+      // Only leave the headless site for real payment gateway redirects.
+      if (
+        payload.redirect &&
+        isExternalPaymentRedirect(payload.redirect) &&
+        !order
+      ) {
         window.location.href = payload.redirect;
         return;
       }
 
-      await refetch();
-      const orderNumber = payload.order?.orderNumber || payload.order?.databaseId;
-      router.push(`/order-received/?order=${orderNumber || ""}`);
+      await refetch().catch(() => null);
+
+      const orderNumber =
+        order?.orderNumber ||
+        order?.databaseId ||
+        orderIdFromRedirect(payload.redirect) ||
+        "";
+
+      await router.push(
+        orderNumber
+          ? `/order-received/?order=${encodeURIComponent(orderNumber)}`
+          : "/order-received/",
+      );
     } catch (err) {
       setError(getErrorMessage(err, "Checkout failed"));
     }

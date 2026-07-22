@@ -133,7 +133,14 @@ export default function MyAccountPage() {
       setFormSuccess("Logged in successfully.");
       await refetch();
     } catch (err) {
-      setFormError(getErrorMessage(err, "Login failed"));
+      const message = getErrorMessage(err, "Login failed");
+      if (/jwt auth is not configured/i.test(message)) {
+        setFormError(
+          "JWT Auth is not configured on WordPress. Add GRAPHQL_JWT_AUTH_SECRET_KEY to wp-config.php (see instructions below), then try again.",
+        );
+      } else {
+        setFormError(message);
+      }
     } finally {
       setBusy(false);
     }
@@ -341,10 +348,29 @@ export default function MyAccountPage() {
                 <button type="submit" disabled={busy}>
                   {busy ? "Logging in…" : "Log in"}
                 </button>
-                <p className={styles.hint}>
-                  Requires the <strong>WPGraphQL JWT Authentication</strong>{" "}
-                  plugin on WordPress.
-                </p>
+                <div className={styles.hint}>
+                  <p>
+                    Login requires the{" "}
+                    <strong>WPGraphQL JWT Authentication</strong> plugin plus a
+                    secret key in WordPress <code>wp-config.php</code>:
+                  </p>
+                  <pre className={styles.code}>
+{`define( 'GRAPHQL_JWT_AUTH_SECRET_KEY', 'paste-a-long-random-secret' );`}
+                  </pre>
+                  <p>
+                    Place it <strong>above</strong>{" "}
+                    <code>/* That's all, stop editing! */</code>. Generate a
+                    secret at{" "}
+                    <a
+                      href="https://api.wordpress.org/secret-key/1.1/salt/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      api.wordpress.org/secret-key/1.1/salt
+                    </a>
+                    .
+                  </p>
+                </div>
               </form>
             ) : (
               <form className={styles.form} onSubmit={handleRegister}>
