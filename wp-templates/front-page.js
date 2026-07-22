@@ -93,6 +93,8 @@ FrontPage.queries = [
   },
   {
     query: PRODUCTS_QUERY,
-    variables: { first: PRODUCTS_PER_PAGE },
+    variables: () => ({
+      first: PRODUCTS_PER_PAGE,
+    }),
   },
 ];
