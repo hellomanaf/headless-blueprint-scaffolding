@@ -6,6 +6,7 @@ import { useQuery } from "@apollo/client";
 import { getNextStaticProps } from "@faustwp/core";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
+import AddToCartButton from "../../components/AddToCartButton";
 import { SITE_DATA_QUERY } from "../../queries/SiteSettingsQuery";
 import { HEADER_MENU_QUERY } from "../../queries/MenuQueries";
 import { PRODUCT_BY_SLUG_QUERY } from "../../queries/ProductBySlugQuery";
@@ -128,6 +129,11 @@ export default function ProductPage(props) {
                 </span>
               </p>
             )}
+
+            <AddToCartButton
+              productId={product.databaseId}
+              stockStatus={product.stockStatus}
+            />
 
             {product.shortDescription && (
               <div

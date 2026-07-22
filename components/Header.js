@@ -1,8 +1,11 @@
 import { gql } from "@apollo/client";
 import Link from "next/link";
 import style from "../styles/header.module.css";
+import { useCart } from "../context/CartContext";
 
 export default function Header({ siteTitle, siteDescription, menuItems }) {
+  const { itemCount } = useCart();
+
   return (
     <header className={style.header}>
       <div className={`container ${style.container}`}>
@@ -18,6 +21,17 @@ export default function Header({ siteTitle, siteDescription, menuItems }) {
                 <Link href={item.uri}>{item.label}</Link>
               </li>
             ))}
+            <li>
+              <Link href="/">Shop</Link>
+            </li>
+            <li>
+              <Link href="/cart/">
+                Cart{itemCount > 0 ? ` (${itemCount})` : ""}
+              </Link>
+            </li>
+            <li>
+              <Link href="/my-account/">Account</Link>
+            </li>
           </ul>
         </nav>
       </div>

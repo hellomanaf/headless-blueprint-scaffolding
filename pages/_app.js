@@ -2,6 +2,7 @@ import "../faust.config";
 import React from "react";
 import { useRouter } from "next/router";
 import { FaustProvider } from "@faustwp/core";
+import { CartProvider } from "../context/CartContext";
 import "../styles/globals.css";
 
 export default function MyApp({ Component, pageProps }) {
@@ -9,7 +10,9 @@ export default function MyApp({ Component, pageProps }) {
 
   return (
     <FaustProvider pageProps={pageProps}>
-      <Component {...pageProps} key={router.asPath} />
+      <CartProvider>
+        <Component {...pageProps} key={router.asPath} />
+      </CartProvider>
     </FaustProvider>
   );
 }
