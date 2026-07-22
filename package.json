@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "faust dev",
-    "build": "faust build",
+    "build": "faust build --skip-health-checks",
     "generate": "faust generatePossibleTypes",
     "start": "faust start",
     "format": "prettier . --write",
