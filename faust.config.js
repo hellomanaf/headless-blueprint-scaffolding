@@ -8,6 +8,6 @@ import { WooSessionPlugin } from "./plugins/WooSessionPlugin";
  **/
 export default setConfig({
   templates,
-  experimentalPlugins: [new WooSessionPlugin()],
+  plugins: [new WooSessionPlugin()],
   possibleTypes,
 });
