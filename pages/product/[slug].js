@@ -12,6 +12,7 @@ import { HEADER_MENU_QUERY } from "../../queries/MenuQueries";
 import { PRODUCT_BY_SLUG_QUERY } from "../../queries/ProductBySlugQuery";
 import { PRODUCT_AIRPORT_QUERY } from "../../queries/AirportsQuery";
 import { getErrorMessage } from "../../lib/errors";
+import { REVALIDATE_SECONDS } from "../../lib/revalidate";
 import styles from "../../styles/product-page.module.css";
 
 function formatPrice(price) {
@@ -40,7 +41,8 @@ export default function ProductPage(props) {
     variables: { slug: String(slug || "") },
     skip: !slug,
     errorPolicy: "all",
-    fetchPolicy: "cache-and-network",
+    fetchPolicy: "network-only",
+    nextFetchPolicy: "cache-first",
   });
 
   const siteData = siteDataQuery?.data?.generalSettings || {};
@@ -209,7 +211,7 @@ export async function getStaticProps(context) {
   return getNextStaticProps(context, {
     Page: ProductPage,
     props: { slug },
-    revalidate: 60,
+    revalidate: REVALIDATE_SECONDS,
   });
 }
 

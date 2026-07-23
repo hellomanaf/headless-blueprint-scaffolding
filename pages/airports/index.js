@@ -16,6 +16,8 @@ export default function AirportsPage() {
   const airportsQuery = useQuery(AIRPORTS_QUERY, {
     variables: { limit: 100, status: "approved" },
     errorPolicy: "all",
+    fetchPolicy: "network-only",
+    nextFetchPolicy: "cache-first",
   }) || {};
 
   const siteData = siteDataQuery?.data?.generalSettings || {};

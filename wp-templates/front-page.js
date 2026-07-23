@@ -31,6 +31,8 @@ export default function FrontPage(props) {
       },
       errorPolicy: "all",
       skip: isPreviewLoading,
+      fetchPolicy: "network-only",
+      nextFetchPolicy: "cache-first",
     }) || {};
 
   const airports = airportsQuery?.data?.airports || [];

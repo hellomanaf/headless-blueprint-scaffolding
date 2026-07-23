@@ -25,6 +25,8 @@ export default function AirportPage() {
     variables: { slug, productsLimit: PRODUCTS_LIMIT },
     skip: !slug,
     errorPolicy: "all",
+    fetchPolicy: "network-only",
+    nextFetchPolicy: "cache-first",
   });
 
   const siteData = siteDataQuery?.data?.generalSettings || {};

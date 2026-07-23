@@ -11,4 +11,6 @@ export default setConfig({
   templates,
   plugins: [new CompatibleSeedQueryPlugin(), new WooSessionPlugin()],
   possibleTypes,
+  // POST GraphQL so WP Engine / CDN do not cache catalog queries as GET.
+  useGETForQueries: false,
 });
