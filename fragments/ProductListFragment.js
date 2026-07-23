@@ -5,6 +5,9 @@ import { gql } from "@apollo/client";
  * interface) so Apollo can match by __typename without WooCommerce entries
  * in possibleTypes.json. Run `npm run generate` after installing WooGraphQL
  * to keep possibleTypes in sync.
+ *
+ * `airport` / `airportId` come from the ADMV multivendor plugin when it
+ * registers those fields on WooGraphQL product types.
  */
 export const PRODUCT_FIELDS = gql`
   fragment SimpleProductFields on SimpleProduct {
@@ -21,6 +24,13 @@ export const PRODUCT_FIELDS = gql`
       id
       sourceUrl
       altText
+    }
+    airportId
+    airport {
+      databaseId
+      name
+      slug
+      logoUrl
     }
   }
 
@@ -39,6 +49,13 @@ export const PRODUCT_FIELDS = gql`
       sourceUrl
       altText
     }
+    airportId
+    airport {
+      databaseId
+      name
+      slug
+      logoUrl
+    }
   }
 
   fragment ExternalProductFields on ExternalProduct {
@@ -56,6 +73,13 @@ export const PRODUCT_FIELDS = gql`
       sourceUrl
       altText
     }
+    airportId
+    airport {
+      databaseId
+      name
+      slug
+      logoUrl
+    }
   }
 
   fragment GroupProductFields on GroupProduct {
@@ -68,6 +92,13 @@ export const PRODUCT_FIELDS = gql`
       id
       sourceUrl
       altText
+    }
+    airportId
+    airport {
+      databaseId
+      name
+      slug
+      logoUrl
     }
   }
 `;

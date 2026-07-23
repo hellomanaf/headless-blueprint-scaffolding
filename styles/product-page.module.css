@@ -60,6 +60,22 @@
   line-height: 1.2;
 }
 
+.vendor {
+  margin: 0;
+  font-size: 1rem;
+  color: #6b7280;
+}
+
+.vendorLink {
+  color: #4b5563;
+  font-weight: 500;
+}
+
+.vendorLink:hover {
+  color: royalblue;
+  text-decoration: underline;
+}
+
 .price {
   margin: 0;
   font-size: 1.5rem;

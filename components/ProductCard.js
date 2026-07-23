@@ -1,24 +1,28 @@
 import Link from "next/link";
 import Image from "next/image";
 import styles from "../styles/product-card.module.css";
+import { normalizeProduct } from "../lib/normalizeProduct";
 
 function formatPrice(price) {
   if (!price) return null;
   // WooGraphQL often returns HTML currency strings like "$19.00"
-  return price.replace(/<[^>]*>/g, "").trim();
+  return String(price).replace(/<[^>]*>/g, "").trim();
 }
 
-export default function ProductCard({ product }) {
-  const name = product?.name || product?.title || "Untitled product";
-  const slug = product?.slug;
-  const shortDescription = product?.shortDescription;
-  const image = product?.image;
-  const price = product?.price;
-  const onSale = product?.onSale;
-  const salePrice = product?.salePrice;
-  const regularPrice = product?.regularPrice;
+export default function ProductCard({ product, airport }) {
+  const normalized = normalizeProduct(product, airport) || {};
+  const name = normalized.name || "Untitled product";
+  const slug = normalized.slug;
+  const shortDescription = normalized.shortDescription;
+  const image = normalized.image;
+  const price = normalized.price;
+  const onSale = normalized.onSale;
+  const salePrice = normalized.salePrice;
+  const regularPrice = normalized.regularPrice;
+  const vendor = normalized.airport;
 
   const href = slug ? `/product/${slug}/` : "#";
+  const airportHref = vendor?.slug ? `/airport/${vendor.slug}/` : null;
   const displayPrice = formatPrice(onSale && salePrice ? salePrice : price);
   const originalPrice = onSale ? formatPrice(regularPrice) : null;
 
@@ -46,6 +50,18 @@ export default function ProductCard({ product }) {
             {name}
           </Link>
         </h2>
+
+        {vendor?.name && (
+          <p className={styles.vendor}>
+            {airportHref ? (
+              <Link href={airportHref} className={styles.vendorLink}>
+                {vendor.name}
+              </Link>
+            ) : (
+              <span>{vendor.name}</span>
+            )}
+          </p>
+        )}
 
         {shortDescription && (
           <div

@@ -142,6 +142,21 @@ export default function ProductPage(props) {
           <div className={styles.details}>
             <h1 className={styles.title}>{product.name}</h1>
 
+            {product.airport?.name && (
+              <p className={styles.vendor}>
+                {product.airport.slug ? (
+                  <Link
+                    href={`/airport/${product.airport.slug}/`}
+                    className={styles.vendorLink}
+                  >
+                    {product.airport.name}
+                  </Link>
+                ) : (
+                  product.airport.name
+                )}
+              </p>
+            )}
+
             {displayPrice && (
               <p className={styles.price}>
                 {product.onSale && originalPrice && (

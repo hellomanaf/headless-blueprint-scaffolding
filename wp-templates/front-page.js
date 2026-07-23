@@ -1,4 +1,5 @@
 import Head from "next/head";
+import { useMemo, useState } from "react";
 import Header from "../components/Header";
 import EntryHeader from "../components/EntryHeader";
 import Footer from "../components/Footer";
@@ -7,29 +8,55 @@ import style from "../styles/front-page.module.css";
 import { SITE_DATA_QUERY } from "../queries/SiteSettingsQuery";
 import { HEADER_MENU_QUERY } from "../queries/MenuQueries";
 import { PRODUCTS_QUERY } from "../queries/ProductsQuery";
+import { AIRPORTS_QUERY } from "../queries/AirportsQuery";
 import { useQuery } from "@apollo/client";
 import { getNextStaticProps } from "@faustwp/core";
 
-const PRODUCTS_PER_PAGE = 12;
+const PRODUCTS_PER_PAGE = 24;
 
 export default function FrontPage(props) {
-  // Loading state for previews
-  if (props.loading) {
+  const [selectedAirportId, setSelectedAirportId] = useState("all");
+  const isPreviewLoading = Boolean(props.loading);
+
+  const siteDataQuery = useQuery(SITE_DATA_QUERY, {
+    skip: isPreviewLoading,
+  }) || {};
+  const headerMenuDataQuery = useQuery(HEADER_MENU_QUERY, {
+    skip: isPreviewLoading,
+  }) || {};
+  const productsQuery =
+    useQuery(PRODUCTS_QUERY, {
+      variables: { first: PRODUCTS_PER_PAGE },
+      errorPolicy: "all",
+      skip: isPreviewLoading,
+    }) || {};
+  const airportsQuery =
+    useQuery(AIRPORTS_QUERY, {
+      variables: { limit: 100, status: "approved" },
+      errorPolicy: "all",
+      skip: isPreviewLoading,
+    }) || {};
+
+  const products = productsQuery?.data?.products?.nodes || [];
+  const filteredProducts = useMemo(() => {
+    if (selectedAirportId === "all") return products;
+    return products.filter((product) => {
+      const airportId =
+        product?.airport?.databaseId ?? product?.airportId ?? null;
+      return String(airportId) === String(selectedAirportId);
+    });
+  }, [products, selectedAirportId]);
+
+  if (isPreviewLoading) {
     return <>Loading...</>;
   }
-
-  const siteDataQuery = useQuery(SITE_DATA_QUERY) || {};
-  const headerMenuDataQuery = useQuery(HEADER_MENU_QUERY) || {};
-  const productsQuery = useQuery(PRODUCTS_QUERY, {
-    variables: { first: PRODUCTS_PER_PAGE },
-  }) || {};
 
   const siteData = siteDataQuery?.data?.generalSettings || {};
   const menuItems = headerMenuDataQuery?.data?.primaryMenuItems?.nodes || {
     nodes: [],
   };
   const { title: siteTitle, description: siteDescription } = siteData;
-  const products = productsQuery?.data?.products?.nodes || [];
+  const airports = airportsQuery?.data?.airports || [];
   const productsLoading = productsQuery?.loading && !productsQuery?.data;
   const productsError = productsQuery?.error;
 
@@ -48,24 +75,65 @@ export default function FrontPage(props) {
       <main className="container">
         <EntryHeader title="Shop" />
 
+        {airports.length > 0 && (
+          <div
+            className={style.airportFilters}
+            role="group"
+            aria-label="Filter by airport"
+          >
+            <button
+              type="button"
+              className={
+                selectedAirportId === "all"
+                  ? style.filterActive
+                  : style.filterButton
+              }
+              onClick={() => setSelectedAirportId("all")}
+            >
+              All airports
+            </button>
+            {airports.map((airport) => {
+              const id = String(airport.databaseId);
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  className={
+                    selectedAirportId === id
+                      ? style.filterActive
+                      : style.filterButton
+                  }
+                  onClick={() => setSelectedAirportId(id)}
+                >
+                  {airport.name}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {productsLoading && <p className={style.status}>Loading products…</p>}
 
         {productsError && (
           <p className={style.status}>
             Could not load products. Make sure the{" "}
             <strong>WPGraphQL for WooCommerce</strong> plugin is installed and
-            active on your WordPress site.
+            the ADMV airport fields are registered on product types.
             {productsError.message ? ` (${productsError.message})` : null}
           </p>
         )}
 
-        {!productsLoading && !productsError && products.length === 0 && (
-          <p className={style.status}>No products found.</p>
+        {!productsLoading && !productsError && filteredProducts.length === 0 && (
+          <p className={style.status}>
+            {selectedAirportId === "all"
+              ? "No products found."
+              : "No products found for this airport."}
+          </p>
         )}
 
-        {products.length > 0 && (
+        {filteredProducts.length > 0 && (
           <section className={style.productGrid} aria-label="Products">
-            {products.map((product) => (
+            {filteredProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </section>
@@ -95,6 +163,13 @@ FrontPage.queries = [
     query: PRODUCTS_QUERY,
     variables: () => ({
       first: PRODUCTS_PER_PAGE,
+    }),
+  },
+  {
+    query: AIRPORTS_QUERY,
+    variables: () => ({
+      limit: 100,
+      status: "approved",
     }),
   },
 ];
