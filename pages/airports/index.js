@@ -2,13 +2,13 @@ import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
 import { useQuery } from "@apollo/client";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-import EntryHeader from "../components/EntryHeader";
-import { SITE_DATA_QUERY } from "../queries/SiteSettingsQuery";
-import { HEADER_MENU_QUERY } from "../queries/MenuQueries";
-import { AIRPORTS_QUERY } from "../queries/AirportsQuery";
-import styles from "../styles/airports.module.css";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
+import EntryHeader from "../../components/EntryHeader";
+import { SITE_DATA_QUERY } from "../../queries/SiteSettingsQuery";
+import { HEADER_MENU_QUERY } from "../../queries/MenuQueries";
+import { AIRPORTS_QUERY } from "../../queries/AirportsQuery";
+import styles from "../../styles/airports.module.css";
 
 export default function AirportsPage() {
   const siteDataQuery = useQuery(SITE_DATA_QUERY) || {};
