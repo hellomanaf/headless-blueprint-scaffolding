@@ -9,7 +9,6 @@ import { SITE_DATA_QUERY } from "../queries/SiteSettingsQuery";
 import { HEADER_MENU_QUERY } from "../queries/MenuQueries";
 import { AIRPORTS_WITH_PRODUCTS_QUERY } from "../queries/AirportsQuery";
 import { useQuery } from "@apollo/client";
-import { getNextStaticProps } from "@faustwp/core";
 
 const PRODUCTS_LIMIT = 100;
 
@@ -154,26 +153,11 @@ export default function FrontPage(props) {
   );
 }
 
-export async function getStaticProps(context) {
-  return getNextStaticProps(context, {
-    Page: FrontPage,
-    revalidate: 60,
-  });
-}
-
 FrontPage.queries = [
   {
     query: SITE_DATA_QUERY,
   },
   {
     query: HEADER_MENU_QUERY,
-  },
-  {
-    query: AIRPORTS_WITH_PRODUCTS_QUERY,
-    variables: () => ({
-      limit: 100,
-      status: "approved",
-      productsLimit: PRODUCTS_LIMIT,
-    }),
   },
 ];
