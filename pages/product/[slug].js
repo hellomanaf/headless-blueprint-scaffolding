@@ -10,6 +10,7 @@ import AddToCartButton from "../../components/AddToCartButton";
 import { SITE_DATA_QUERY } from "../../queries/SiteSettingsQuery";
 import { HEADER_MENU_QUERY } from "../../queries/MenuQueries";
 import { PRODUCT_BY_SLUG_QUERY } from "../../queries/ProductBySlugQuery";
+import { PRODUCT_AIRPORT_QUERY } from "../../queries/AirportsQuery";
 import { getErrorMessage } from "../../lib/errors";
 import styles from "../../styles/product-page.module.css";
 
@@ -48,6 +49,13 @@ export default function ProductPage(props) {
   };
   const { title: siteTitle, description: siteDescription } = siteData;
   const product = resolveProduct(data, slug);
+
+  const { data: airportData } = useQuery(PRODUCT_AIRPORT_QUERY, {
+    variables: { productId: Number(product?.databaseId) },
+    skip: !product?.databaseId,
+    errorPolicy: "all",
+  });
+  const airport = airportData?.productAirport || null;
 
   if (loading && !product) {
     return (
@@ -142,17 +150,17 @@ export default function ProductPage(props) {
           <div className={styles.details}>
             <h1 className={styles.title}>{product.name}</h1>
 
-            {product.airport?.name && (
+            {airport?.name && (
               <p className={styles.vendor}>
-                {product.airport.slug ? (
+                {airport.slug ? (
                   <Link
-                    href={`/airport/${product.airport.slug}/`}
+                    href={`/airport/${airport.slug}/`}
                     className={styles.vendorLink}
                   >
-                    {product.airport.name}
+                    {airport.name}
                   </Link>
                 ) : (
-                  product.airport.name
+                  airport.name
                 )}
               </p>
             )}

@@ -7,12 +7,11 @@ import ProductCard from "../components/ProductCard";
 import style from "../styles/front-page.module.css";
 import { SITE_DATA_QUERY } from "../queries/SiteSettingsQuery";
 import { HEADER_MENU_QUERY } from "../queries/MenuQueries";
-import { PRODUCTS_QUERY } from "../queries/ProductsQuery";
-import { AIRPORTS_QUERY } from "../queries/AirportsQuery";
+import { AIRPORTS_WITH_PRODUCTS_QUERY } from "../queries/AirportsQuery";
 import { useQuery } from "@apollo/client";
 import { getNextStaticProps } from "@faustwp/core";
 
-const PRODUCTS_PER_PAGE = 24;
+const PRODUCTS_LIMIT = 100;
 
 export default function FrontPage(props) {
   const [selectedAirportId, setSelectedAirportId] = useState("all");
@@ -24,28 +23,35 @@ export default function FrontPage(props) {
   const headerMenuDataQuery = useQuery(HEADER_MENU_QUERY, {
     skip: isPreviewLoading,
   }) || {};
-  const productsQuery =
-    useQuery(PRODUCTS_QUERY, {
-      variables: { first: PRODUCTS_PER_PAGE },
-      errorPolicy: "all",
-      skip: isPreviewLoading,
-    }) || {};
   const airportsQuery =
-    useQuery(AIRPORTS_QUERY, {
-      variables: { limit: 100, status: "approved" },
+    useQuery(AIRPORTS_WITH_PRODUCTS_QUERY, {
+      variables: {
+        limit: 100,
+        status: "approved",
+        productsLimit: PRODUCTS_LIMIT,
+      },
       errorPolicy: "all",
       skip: isPreviewLoading,
     }) || {};
 
-  const products = productsQuery?.data?.products?.nodes || [];
-  const filteredProducts = useMemo(() => {
-    if (selectedAirportId === "all") return products;
-    return products.filter((product) => {
-      const airportId =
-        product?.airport?.databaseId ?? product?.airportId ?? null;
-      return String(airportId) === String(selectedAirportId);
-    });
-  }, [products, selectedAirportId]);
+  const airports = airportsQuery?.data?.airports || [];
+
+  const catalog = useMemo(() => {
+    const items = [];
+    for (const airport of airports) {
+      for (const product of airport.products || []) {
+        items.push({ product, airport });
+      }
+    }
+    return items;
+  }, [airports]);
+
+  const filteredCatalog = useMemo(() => {
+    if (selectedAirportId === "all") return catalog;
+    return catalog.filter(
+      (item) => String(item.airport.databaseId) === String(selectedAirportId),
+    );
+  }, [catalog, selectedAirportId]);
 
   if (isPreviewLoading) {
     return <>Loading...</>;
@@ -56,9 +62,8 @@ export default function FrontPage(props) {
     nodes: [],
   };
   const { title: siteTitle, description: siteDescription } = siteData;
-  const airports = airportsQuery?.data?.airports || [];
-  const productsLoading = productsQuery?.loading && !productsQuery?.data;
-  const productsError = productsQuery?.error;
+  const loading = airportsQuery?.loading && !airportsQuery?.data;
+  const error = airportsQuery?.error;
 
   return (
     <>
@@ -112,18 +117,18 @@ export default function FrontPage(props) {
           </div>
         )}
 
-        {productsLoading && <p className={style.status}>Loading products…</p>}
+        {loading && <p className={style.status}>Loading products…</p>}
 
-        {productsError && (
+        {error && (
           <p className={style.status}>
-            Could not load products. Make sure the{" "}
-            <strong>WPGraphQL for WooCommerce</strong> plugin is installed and
-            the ADMV airport fields are registered on product types.
-            {productsError.message ? ` (${productsError.message})` : null}
+            Could not load airport products. Confirm the ADMV GraphQL schema
+            (`airports` / `Airport.products`) is available on your WordPress
+            site.
+            {error.message ? ` (${error.message})` : null}
           </p>
         )}
 
-        {!productsLoading && !productsError && filteredProducts.length === 0 && (
+        {!loading && !error && filteredCatalog.length === 0 && (
           <p className={style.status}>
             {selectedAirportId === "all"
               ? "No products found."
@@ -131,10 +136,14 @@ export default function FrontPage(props) {
           </p>
         )}
 
-        {filteredProducts.length > 0 && (
+        {filteredCatalog.length > 0 && (
           <section className={style.productGrid} aria-label="Products">
-            {filteredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
+            {filteredCatalog.map(({ product, airport }) => (
+              <ProductCard
+                key={`${airport.databaseId}-${product.databaseId}`}
+                product={product}
+                airport={airport}
+              />
             ))}
           </section>
         )}
@@ -160,16 +169,11 @@ FrontPage.queries = [
     query: HEADER_MENU_QUERY,
   },
   {
-    query: PRODUCTS_QUERY,
-    variables: () => ({
-      first: PRODUCTS_PER_PAGE,
-    }),
-  },
-  {
-    query: AIRPORTS_QUERY,
+    query: AIRPORTS_WITH_PRODUCTS_QUERY,
     variables: () => ({
       limit: 100,
       status: "approved",
+      productsLimit: PRODUCTS_LIMIT,
     }),
   },
 ];
