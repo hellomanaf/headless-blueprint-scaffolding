@@ -25,6 +25,7 @@ export default function ProductCard({ product, airport }) {
   const airportHref = vendor?.slug ? `/airport/${vendor.slug}/` : null;
   const displayPrice = formatPrice(onSale && salePrice ? salePrice : price);
   const originalPrice = onSale ? formatPrice(regularPrice) : null;
+  const isShuttle = String(normalized.type || "").toLowerCase() === "shuttle";
 
   return (
     <article className={styles.card}>
@@ -82,7 +83,7 @@ export default function ProductCard({ product, airport }) {
         )}
 
         <Link href={href} className={styles.viewProduct}>
-          View product
+          {isShuttle ? "Book shuttle" : "View product"}
         </Link>
       </div>
     </article>
