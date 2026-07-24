@@ -1,28 +1,34 @@
-import { ApolloLink } from "@apollo/client";
+import { ApolloLink, Observable } from "@apollo/client";
 import { setContext } from "@apollo/client/link/context";
 import {
   getWooAuthToken,
   getWooSessionToken,
   setWooSessionToken,
   clearWooSessionToken,
+  clearWooAuthToken,
 } from "../lib/wooAuth";
 
+function isPoisonedAuthError(errors = []) {
+  return errors.some((error) =>
+    /internal server error|jwt|invalid-secret|not configured|invalid-jwt|expired|authorization/i.test(
+      error?.message || "",
+    ),
+  );
+}
+
 /**
- * Attaches WooCommerce session + customer JWT headers for cart/account.
+ * Attaches WooCommerce session for Faust catalog requests.
+ * Customer JWT is intentionally NOT attached here — account/cart use
+ * `/api/woo-graphql`, and a bad JWT on Faust requests causes WP 500s
+ * that break airports / products / shuttle queries.
  */
 function createWooSessionMiddleware() {
   return setContext((_, { headers }) => {
     const session = getWooSessionToken();
-    const authToken = getWooAuthToken();
     const nextHeaders = { ...headers };
 
     if (session) {
       nextHeaders["woocommerce-session"] = `Session ${session}`;
-    }
-
-    // Prefer Woo customer JWT when present (Faust may also set Authorization).
-    if (authToken) {
-      nextHeaders.Authorization = `Bearer ${authToken}`;
     }
 
     return { headers: nextHeaders };
@@ -31,29 +37,49 @@ function createWooSessionMiddleware() {
 
 /**
  * Persists updated woocommerce-session tokens from GraphQL responses.
+ * Also clears a stale JWT left in localStorage if WP returns auth/500 errors.
  */
 function createWooSessionAfterware() {
   return new ApolloLink((operation, forward) => {
-    return forward(operation).map((response) => {
-      const context = operation.getContext();
-      const responseHeaders = context?.response?.headers;
+    return new Observable((observer) => {
+      const subscription = forward(operation).subscribe({
+        next: (response) => {
+          const context = operation.getContext();
+          const responseHeaders = context?.response?.headers;
 
-      if (responseHeaders) {
-        const sessionHeader =
-          typeof responseHeaders.get === "function"
-            ? responseHeaders.get("woocommerce-session")
-            : null;
-
-        if (sessionHeader) {
-          if (sessionHeader.toLowerCase() === "false") {
-            clearWooSessionToken();
-          } else {
-            setWooSessionToken(sessionHeader);
+          if (responseHeaders && typeof responseHeaders.get === "function") {
+            const sessionHeader = responseHeaders.get("woocommerce-session");
+            if (sessionHeader) {
+              if (sessionHeader.toLowerCase() === "false") {
+                clearWooSessionToken();
+              } else {
+                setWooSessionToken(sessionHeader);
+              }
+            }
           }
-        }
-      }
 
-      return response;
+          const errors = response?.errors || [];
+          if (isPoisonedAuthError(errors) && getWooAuthToken()) {
+            clearWooAuthToken();
+          }
+
+          observer.next(response);
+        },
+        error: (networkError) => {
+          const resultErrors = networkError?.result?.errors || [];
+          if (
+            (isPoisonedAuthError(resultErrors) ||
+              /internal server error/i.test(networkError?.message || "")) &&
+            getWooAuthToken()
+          ) {
+            clearWooAuthToken();
+          }
+          observer.error(networkError);
+        },
+        complete: () => observer.complete(),
+      });
+
+      return () => subscription.unsubscribe();
     });
   });
 }
