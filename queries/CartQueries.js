@@ -13,10 +13,10 @@ export const CART_FRAGMENT = gql`
         product {
           node {
             __typename
-            databaseId
-            slug
-            name
             ... on SimpleProduct {
+              databaseId
+              slug
+              name
               price
               image {
                 sourceUrl
@@ -24,6 +24,9 @@ export const CART_FRAGMENT = gql`
               }
             }
             ... on VariableProduct {
+              databaseId
+              slug
+              name
               price
               image {
                 sourceUrl
@@ -31,6 +34,9 @@ export const CART_FRAGMENT = gql`
               }
             }
             ... on ExternalProduct {
+              databaseId
+              slug
+              name
               price
               image {
                 sourceUrl
@@ -38,6 +44,9 @@ export const CART_FRAGMENT = gql`
               }
             }
             ... on GroupProduct {
+              databaseId
+              slug
+              name
               image {
                 sourceUrl
                 altText
