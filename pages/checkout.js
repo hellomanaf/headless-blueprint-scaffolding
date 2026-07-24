@@ -32,10 +32,88 @@ const emptyAddress = {
   city: "",
   state: "",
   postcode: "",
-  country: "US",
+  country: "AE",
   email: "",
   phone: "",
 };
+
+/** WooGraphQL CountriesEnum — ISO 3166-1 alpha-2 codes. */
+const COUNTRY_OPTIONS = [
+  { code: "AE", label: "United Arab Emirates" },
+  { code: "SA", label: "Saudi Arabia" },
+  { code: "QA", label: "Qatar" },
+  { code: "BH", label: "Bahrain" },
+  { code: "KW", label: "Kuwait" },
+  { code: "OM", label: "Oman" },
+  { code: "IN", label: "India" },
+  { code: "PK", label: "Pakistan" },
+  { code: "GB", label: "United Kingdom" },
+  { code: "US", label: "United States" },
+  { code: "CA", label: "Canada" },
+  { code: "AU", label: "Australia" },
+  { code: "DE", label: "Germany" },
+  { code: "FR", label: "France" },
+  { code: "IT", label: "Italy" },
+  { code: "ES", label: "Spain" },
+  { code: "NL", label: "Netherlands" },
+  { code: "SG", label: "Singapore" },
+  { code: "MY", label: "Malaysia" },
+  { code: "PH", label: "Philippines" },
+  { code: "EG", label: "Egypt" },
+  { code: "JO", label: "Jordan" },
+  { code: "LB", label: "Lebanon" },
+  { code: "TR", label: "Turkey" },
+  { code: "CN", label: "China" },
+  { code: "JP", label: "Japan" },
+  { code: "KR", label: "South Korea" },
+  { code: "RU", label: "Russia" },
+  { code: "ZA", label: "South Africa" },
+  { code: "BR", label: "Brazil" },
+  { code: "MX", label: "Mexico" },
+  { code: "NZ", label: "New Zealand" },
+  { code: "IE", label: "Ireland" },
+  { code: "CH", label: "Switzerland" },
+  { code: "SE", label: "Sweden" },
+  { code: "NO", label: "Norway" },
+  { code: "DK", label: "Denmark" },
+  { code: "AT", label: "Austria" },
+  { code: "BE", label: "Belgium" },
+  { code: "PT", label: "Portugal" },
+  { code: "PL", label: "Poland" },
+  { code: "GR", label: "Greece" },
+  { code: "HK", label: "Hong Kong" },
+  { code: "TW", label: "Taiwan" },
+  { code: "TH", label: "Thailand" },
+  { code: "ID", label: "Indonesia" },
+  { code: "VN", label: "Vietnam" },
+  { code: "BD", label: "Bangladesh" },
+  { code: "LK", label: "Sri Lanka" },
+  { code: "NP", label: "Nepal" },
+  { code: "NG", label: "Nigeria" },
+  { code: "KE", label: "Kenya" },
+  { code: "MA", label: "Morocco" },
+];
+
+const COUNTRY_ALIASES = {
+  UAE: "AE",
+  "UNITED ARAB EMIRATES": "AE",
+  UK: "GB",
+  "UNITED KINGDOM": "GB",
+  "GREAT BRITAIN": "GB",
+  USA: "US",
+  "UNITED STATES": "US",
+  "UNITED STATES OF AMERICA": "US",
+};
+
+function normalizeCountryCode(value, fallback = "AE") {
+  if (!value) return fallback;
+  const raw = String(value).trim().toUpperCase();
+  if (COUNTRY_OPTIONS.some((item) => item.code === raw)) return raw;
+  if (COUNTRY_ALIASES[raw]) return COUNTRY_ALIASES[raw];
+  // Accept any 2-letter ISO code even if not in the curated list.
+  if (/^[A-Z]{2}$/.test(raw)) return raw;
+  return fallback;
+}
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -83,7 +161,10 @@ export default function CheckoutPage() {
       city: customer.billing?.city || "",
       state: customer.billing?.state || "",
       postcode: customer.billing?.postcode || "",
-      country: customer.billing?.country || prev.country || "US",
+      country: normalizeCountryCode(
+        customer.billing?.country,
+        prev.country || "AE",
+      ),
       email: customer.billing?.email || customer.email || "",
       phone: customer.billing?.phone || "",
     }));
@@ -97,7 +178,10 @@ export default function CheckoutPage() {
       city: customer.shipping?.city || "",
       state: customer.shipping?.state || "",
       postcode: customer.shipping?.postcode || "",
-      country: customer.shipping?.country || prev.country || "US",
+      country: normalizeCountryCode(
+        customer.shipping?.country,
+        prev.country || "AE",
+      ),
     }));
   }, [customer]);
 
@@ -130,12 +214,22 @@ export default function CheckoutPage() {
     }
 
     try {
+      const billingInput = {
+        ...billing,
+        country: normalizeCountryCode(billing.country),
+      };
+      const shippingSource = shipToDifferent ? shipping : billingInput;
+      const shippingInput = {
+        ...shippingSource,
+        country: normalizeCountryCode(shippingSource.country),
+      };
+
       const result = await checkout({
         variables: {
           input: {
             paymentMethod,
-            billing,
-            shipping: shipToDifferent ? shipping : billing,
+            billing: billingInput,
+            shipping: shippingInput,
             customerNote: orderNotes || undefined,
             shipToDifferentAddress: shipToDifferent,
           },
@@ -396,12 +490,27 @@ function AddressFields({ values, onChange, includeContact = false }) {
       </label>
       <label>
         Country *
-        <input
+        <select
           required
-          value={values.country}
+          value={normalizeCountryCode(values.country)}
           onChange={(e) => onChange("country", e.target.value)}
-          placeholder="US"
-        />
+        >
+          {COUNTRY_OPTIONS.map((country) => (
+            <option key={country.code} value={country.code}>
+              {country.label}
+            </option>
+          ))}
+          {/* Keep saved ISO codes that aren't in the curated list selectable */}
+          {values.country &&
+            /^[A-Za-z]{2}$/.test(values.country) &&
+            !COUNTRY_OPTIONS.some(
+              (item) => item.code === values.country.toUpperCase(),
+            ) && (
+              <option value={values.country.toUpperCase()}>
+                {values.country.toUpperCase()}
+              </option>
+            )}
+        </select>
       </label>
       {includeContact && (
         <>
