@@ -15,7 +15,17 @@ import styles from "../styles/order-received.module.css";
 
 function stripHtml(value) {
   if (!value) return "";
-  return String(value).replace(/<[^>]*>/g, "").trim();
+  return String(value)
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#0?39;/g, "'")
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 export default function OrderReceivedPage() {
@@ -123,7 +133,6 @@ export default function OrderReceivedPage() {
                   <ul className={styles.lineItems}>
                     {lineItems.map((item, index) => {
                       const name =
-                        item.variation?.node?.name ||
                         item.product?.node?.name ||
                         "Item";
                       return (

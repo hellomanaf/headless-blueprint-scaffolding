@@ -14,7 +14,17 @@ const CartContext = createContext(null);
 
 function stripHtml(value) {
   if (!value) return "";
-  return value.replace(/<[^>]*>/g, "").trim();
+  return String(value)
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#0?39;/g, "'")
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function writeCart(cache, cart) {

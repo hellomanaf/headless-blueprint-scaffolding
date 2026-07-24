@@ -63,11 +63,6 @@ export const ORDER_FIELDS = gql`
             }
           }
         }
-        variation {
-          node {
-            name
-          }
-        }
       }
     }
   }

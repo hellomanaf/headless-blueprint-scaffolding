@@ -258,7 +258,7 @@ export default function CheckoutPage() {
               <ul className={styles.lineItems}>
                 {items.map((item) => {
                   const product = item.product?.node;
-                  const name = item.variation?.node?.name || product?.name;
+                  const name = product?.name;
                   return (
                     <li key={item.key}>
                       <span>
