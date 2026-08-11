@@ -3,7 +3,7 @@
  *
  * Call after saving content in WordPress (webhook, plugin, or manual):
  *   POST /api/revalidate?secret=YOUR_SECRET&path=/
- *   POST /api/revalidate?secret=YOUR_SECRET&path=/airports/
+ *   POST /api/revalidate?secret=YOUR_SECRET&path=/stores/
  *
  * Set REVALIDATE_SECRET in the frontend env (Atlas / .env).
  */

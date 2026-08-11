@@ -33,11 +33,27 @@ export const ADD_SHUTTLE_TO_CART_MUTATION = gql`
         cartCount
         cartTotal
         booking {
-          price
+          journeyType
+          tripId
+          tripLabel
+          travelDate
+          departureTime
+          arrivalTime
+          durationMinutes
+          origin
+          destination
+          returnTripId
+          returnTripLabel
+          returnDate
+          returnDepartureTime
+          returnArrivalTime
+          adults
+          children
+          infants
           seats
           legs
-          tripLabel
-          returnTripLabel
+          oneWayPrice
+          price
         }
       }
     }

@@ -9,8 +9,8 @@ function formatPrice(price) {
   return String(price).replace(/<[^>]*>/g, "").trim();
 }
 
-export default function ProductCard({ product, airport }) {
-  const normalized = normalizeProduct(product, airport) || {};
+export default function ProductCard({ product, store, airport }) {
+  const normalized = normalizeProduct(product, store || airport) || {};
   const name = normalized.name || "Untitled product";
   const slug = normalized.slug;
   const shortDescription = normalized.shortDescription;
@@ -19,10 +19,10 @@ export default function ProductCard({ product, airport }) {
   const onSale = normalized.onSale;
   const salePrice = normalized.salePrice;
   const regularPrice = normalized.regularPrice;
-  const vendor = normalized.airport;
+  const vendor = normalized.store;
 
   const href = slug ? `/product/${slug}/` : "#";
-  const airportHref = vendor?.slug ? `/airport/${vendor.slug}/` : null;
+  const storeHref = vendor?.slug ? `/store/${vendor.slug}/` : null;
   const displayPrice = formatPrice(onSale && salePrice ? salePrice : price);
   const originalPrice = onSale ? formatPrice(regularPrice) : null;
   const isShuttle = String(normalized.type || "").toLowerCase() === "shuttle";
@@ -54,8 +54,8 @@ export default function ProductCard({ product, airport }) {
 
         {vendor?.name && (
           <p className={styles.vendor}>
-            {airportHref ? (
-              <Link href={airportHref} className={styles.vendorLink}>
+            {storeHref ? (
+              <Link href={storeHref} className={styles.vendorLink}>
                 {vendor.name}
               </Link>
             ) : (

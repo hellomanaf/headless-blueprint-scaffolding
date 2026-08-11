@@ -1,11 +1,11 @@
 import { gql } from "@apollo/client";
 
 /**
- * ADMV Airport type (vendor = airport in this marketplace).
- * See admv/v1 REST + WPGraphQL airport schema.
+ * AD Multi Store Marketplace `Store` type.
+ * GraphQL query names remain vendors / vendor / productVendor / vendorProducts.
  */
-export const AIRPORT_FIELDS = gql`
-  fragment AirportFields on Airport {
+export const STORE_FIELDS = gql`
+  fragment StoreFields on Store {
     id
     databaseId
     name
@@ -15,18 +15,20 @@ export const AIRPORT_FIELDS = gql`
     email
     phone
     address
+    logoId
     logoUrl
+    bannerId
     bannerUrl
     createdAt
   }
 `;
 
 /**
- * Published products returned by airportProducts / Airport.products.
+ * Published products from vendorProducts / Store.products.
  * Field names differ from WooGraphQL Product (imageUrl vs image.sourceUrl).
  */
-export const AIRPORT_PRODUCT_FIELDS = gql`
-  fragment AirportProductFields on AirportProduct {
+export const VENDOR_PRODUCT_FIELDS = gql`
+  fragment VendorProductFields on VendorProduct {
     databaseId
     name
     slug
@@ -40,6 +42,6 @@ export const AIRPORT_PRODUCT_FIELDS = gql`
     stockStatus
     imageUrl
     shortDescription
-    airportId
+    vendorId
   }
 `;

@@ -25,7 +25,7 @@ export default function Header({ siteTitle, siteDescription, menuItems }) {
               <Link href="/">Shop</Link>
             </li>
             <li>
-              <Link href="/airports/">Airports</Link>
+              <Link href="/stores/">Stores</Link>
             </li>
             <li>
               <Link href="/cart/">

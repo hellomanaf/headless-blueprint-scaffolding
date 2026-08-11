@@ -18,4 +18,28 @@ module.exports = withFaust({
     domains: [getWordpressHostname()],
   },
   trailingSlash: true,
+  async redirects() {
+    return [
+      {
+        source: "/airports",
+        destination: "/stores/",
+        permanent: true,
+      },
+      {
+        source: "/airports/",
+        destination: "/stores/",
+        permanent: true,
+      },
+      {
+        source: "/airport/:slug",
+        destination: "/store/:slug/",
+        permanent: true,
+      },
+      {
+        source: "/airport/:slug/",
+        destination: "/store/:slug/",
+        permanent: true,
+      },
+    ];
+  },
 });

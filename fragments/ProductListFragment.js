@@ -6,8 +6,9 @@ import { gql } from "@apollo/client";
  * in possibleTypes.json. Run `npm run generate` after installing WooGraphQL
  * to keep possibleTypes in sync.
  *
- * Airport/vendor data is loaded via ADMV GraphQL (`productAirport`,
- * `airport.products`) — not as fields on WooGraphQL product types.
+ * Store/vendor data is loaded via AD Multi Store Marketplace GraphQL
+ * (`productVendor`, `vendor.products`) — not as fields on WooGraphQL
+ * product types.
  */
 export const PRODUCT_FIELDS = gql`
   fragment SimpleProductFields on SimpleProduct {

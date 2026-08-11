@@ -113,7 +113,7 @@ export default function ShuttleBookingForm({ product }) {
     productId &&
     tripId &&
     travelDate &&
-    adults + children > 0 &&
+    adults + children + infants >= 1 &&
     (!isRoundTrip || (returnDate && returnTripId));
 
   const quoteVariables = {

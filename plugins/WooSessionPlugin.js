@@ -20,7 +20,7 @@ function isPoisonedAuthError(errors = []) {
  * Attaches WooCommerce session for Faust catalog requests.
  * Customer JWT is intentionally NOT attached here — account/cart use
  * `/api/woo-graphql`, and a bad JWT on Faust requests causes WP 500s
- * that break airports / products / shuttle queries.
+ * that break stores / products / shuttle queries.
  */
 function createWooSessionMiddleware() {
   return setContext((_, { headers }) => {

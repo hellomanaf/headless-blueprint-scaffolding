@@ -6,16 +6,15 @@ export const SHUTTLE_PRODUCT_BY_SLUG_QUERY = gql`
       databaseId
       name
       slug
+      permalink
       routeName
       origin {
         name
-        lat
-        lng
+        address
       }
       destination {
         name
-        lat
-        lng
+        address
       }
       durationMinutes
       defaultCapacity
@@ -49,9 +48,11 @@ export const SHUTTLE_PRODUCT_BY_SLUG_QUERY = gql`
         capacity
         origin {
           name
+          address
         }
         destination {
           name
+          address
         }
         map {
           id
@@ -70,16 +71,15 @@ export const SHUTTLE_PRODUCT_BY_ID_QUERY = gql`
       databaseId
       name
       slug
+      permalink
       routeName
       origin {
         name
-        lat
-        lng
+        address
       }
       destination {
         name
-        lat
-        lng
+        address
       }
       durationMinutes
       defaultCapacity
@@ -113,9 +113,11 @@ export const SHUTTLE_PRODUCT_BY_ID_QUERY = gql`
         capacity
         origin {
           name
+          address
         }
         destination {
           name
+          address
         }
         map {
           id
@@ -141,6 +143,10 @@ export const SHUTTLE_AVAILABLE_DATES_QUERY = gql`
       from: $from
       to: $to
     ) {
+      productId
+      tripId
+      from
+      to
       dates
       holidays
       blackouts
@@ -161,6 +167,9 @@ export const SHUTTLE_AVAILABILITY_QUERY = gql`
       tripId: $tripId
       travelDate: $travelDate
     ) {
+      productId
+      tripId
+      travelDate
       capacity
       booked
       remaining
@@ -197,13 +206,22 @@ export const SHUTTLE_QUOTE_QUERY = gql`
         child
         infant
         freeUnderAge
+        childAgeMin
+        childAgeMax
+        currency
       }
       availability {
+        productId
+        tripId
+        travelDate
         remaining
         capacity
         booked
       }
       returnAvailability {
+        productId
+        tripId
+        travelDate
         remaining
         capacity
         booked
@@ -215,11 +233,14 @@ export const SHUTTLE_QUOTE_QUERY = gql`
         travelDate
         departureTime
         arrivalTime
+        durationMinutes
         origin
         destination
         returnTripId
         returnTripLabel
         returnDate
+        returnDepartureTime
+        returnArrivalTime
         adults
         children
         infants

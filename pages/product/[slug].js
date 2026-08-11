@@ -11,7 +11,7 @@ import ShuttleBookingForm from "../../components/ShuttleBookingForm";
 import { SITE_DATA_QUERY } from "../../queries/SiteSettingsQuery";
 import { HEADER_MENU_QUERY } from "../../queries/MenuQueries";
 import { PRODUCT_BY_SLUG_QUERY } from "../../queries/ProductBySlugQuery";
-import { PRODUCT_AIRPORT_QUERY } from "../../queries/AirportsQuery";
+import { PRODUCT_VENDOR_QUERY } from "../../queries/StoresQuery";
 import { SHUTTLE_PRODUCT_BY_SLUG_QUERY } from "../../queries/ShuttleQueries";
 import { getErrorMessage } from "../../lib/errors";
 import { REVALIDATE_SECONDS } from "../../lib/revalidate";
@@ -154,12 +154,12 @@ export default function ProductPage(props) {
   const { title: siteTitle, description: siteDescription } = siteData;
   const product = resolveProduct(data, slug);
 
-  const { data: airportData } = useQuery(PRODUCT_AIRPORT_QUERY, {
+  const { data: storeData } = useQuery(PRODUCT_VENDOR_QUERY, {
     variables: { productId: Number(product?.databaseId) },
     skip: !product?.databaseId || Boolean(shuttle),
     errorPolicy: "all",
   });
-  const airport = airportData?.productAirport || null;
+  const store = storeData?.productVendor || null;
 
   // Prefer shuttle booking UI when AD Shuttle Product resolves for this slug.
   if (shuttle) {
@@ -250,17 +250,17 @@ export default function ProductPage(props) {
         <div className={styles.details}>
           <h1 className={styles.title}>{product.name}</h1>
 
-          {airport?.name && (
+          {store?.name && (
             <p className={styles.vendor}>
-              {airport.slug ? (
+              {store.slug ? (
                 <Link
-                  href={`/airport/${airport.slug}/`}
+                  href={`/store/${store.slug}/`}
                   className={styles.vendorLink}
                 >
-                  {airport.name}
+                  {store.name}
                 </Link>
               ) : (
-                airport.name
+                store.name
               )}
             </p>
           )}

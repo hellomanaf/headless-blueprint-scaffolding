@@ -7,13 +7,13 @@ import ProductCard from "../components/ProductCard";
 import style from "../styles/front-page.module.css";
 import { SITE_DATA_QUERY } from "../queries/SiteSettingsQuery";
 import { HEADER_MENU_QUERY } from "../queries/MenuQueries";
-import { AIRPORTS_WITH_PRODUCTS_QUERY } from "../queries/AirportsQuery";
+import { STORES_WITH_PRODUCTS_QUERY } from "../queries/StoresQuery";
 import { useQuery } from "@apollo/client";
 
 const PRODUCTS_LIMIT = 100;
 
 export default function FrontPage(props) {
-  const [selectedAirportId, setSelectedAirportId] = useState("all");
+  const [selectedStoreId, setSelectedStoreId] = useState("all");
   const isPreviewLoading = Boolean(props.loading);
 
   const siteDataQuery = useQuery(SITE_DATA_QUERY, {
@@ -22,8 +22,8 @@ export default function FrontPage(props) {
   const headerMenuDataQuery = useQuery(HEADER_MENU_QUERY, {
     skip: isPreviewLoading,
   }) || {};
-  const airportsQuery =
-    useQuery(AIRPORTS_WITH_PRODUCTS_QUERY, {
+  const storesQuery =
+    useQuery(STORES_WITH_PRODUCTS_QUERY, {
       variables: {
         limit: 100,
         status: "approved",
@@ -35,24 +35,24 @@ export default function FrontPage(props) {
       nextFetchPolicy: "cache-first",
     }) || {};
 
-  const airports = airportsQuery?.data?.airports || [];
+  const stores = storesQuery?.data?.vendors || [];
 
   const catalog = useMemo(() => {
     const items = [];
-    for (const airport of airports) {
-      for (const product of airport.products || []) {
-        items.push({ product, airport });
+    for (const store of stores) {
+      for (const product of store.products || []) {
+        items.push({ product, store });
       }
     }
     return items;
-  }, [airports]);
+  }, [stores]);
 
   const filteredCatalog = useMemo(() => {
-    if (selectedAirportId === "all") return catalog;
+    if (selectedStoreId === "all") return catalog;
     return catalog.filter(
-      (item) => String(item.airport.databaseId) === String(selectedAirportId),
+      (item) => String(item.store.databaseId) === String(selectedStoreId),
     );
-  }, [catalog, selectedAirportId]);
+  }, [catalog, selectedStoreId]);
 
   if (isPreviewLoading) {
     return <>Loading...</>;
@@ -63,8 +63,8 @@ export default function FrontPage(props) {
     nodes: [],
   };
   const { title: siteTitle, description: siteDescription } = siteData;
-  const loading = airportsQuery?.loading && !airportsQuery?.data;
-  const error = airportsQuery?.error;
+  const loading = storesQuery?.loading && !storesQuery?.data;
+  const error = storesQuery?.error;
 
   return (
     <>
@@ -81,37 +81,37 @@ export default function FrontPage(props) {
       <main className="container">
         <EntryHeader title="Shop" />
 
-        {airports.length > 0 && (
+        {stores.length > 0 && (
           <div
-            className={style.airportFilters}
+            className={style.storeFilters}
             role="group"
-            aria-label="Filter by airport"
+            aria-label="Filter by store"
           >
             <button
               type="button"
               className={
-                selectedAirportId === "all"
+                selectedStoreId === "all"
                   ? style.filterActive
                   : style.filterButton
               }
-              onClick={() => setSelectedAirportId("all")}
+              onClick={() => setSelectedStoreId("all")}
             >
-              All airports
+              All stores
             </button>
-            {airports.map((airport) => {
-              const id = String(airport.databaseId);
+            {stores.map((store) => {
+              const id = String(store.databaseId);
               return (
                 <button
                   key={id}
                   type="button"
                   className={
-                    selectedAirportId === id
+                    selectedStoreId === id
                       ? style.filterActive
                       : style.filterButton
                   }
-                  onClick={() => setSelectedAirportId(id)}
+                  onClick={() => setSelectedStoreId(id)}
                 >
-                  {airport.name}
+                  {store.name}
                 </button>
               );
             })}
@@ -122,28 +122,28 @@ export default function FrontPage(props) {
 
         {error && (
           <p className={style.status}>
-            Could not load airport products. Confirm the ADMV GraphQL schema
-            (`airports` / `Airport.products`) is available on your WordPress
-            site.
+            Could not load store products. Confirm the AD Multi Store
+            Marketplace GraphQL schema (`vendors` / `Store.products`) is
+            available on your WordPress site.
             {error.message ? ` (${error.message})` : null}
           </p>
         )}
 
         {!loading && !error && filteredCatalog.length === 0 && (
           <p className={style.status}>
-            {selectedAirportId === "all"
+            {selectedStoreId === "all"
               ? "No products found."
-              : "No products found for this airport."}
+              : "No products found for this store."}
           </p>
         )}
 
         {filteredCatalog.length > 0 && (
           <section className={style.productGrid} aria-label="Products">
-            {filteredCatalog.map(({ product, airport }) => (
+            {filteredCatalog.map(({ product, store }) => (
               <ProductCard
-                key={`${airport.databaseId}-${product.databaseId}`}
+                key={`${store.databaseId}-${product.databaseId}`}
                 product={product}
-                airport={airport}
+                store={store}
               />
             ))}
           </section>
